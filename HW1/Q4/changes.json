@@ -1,0 +1,136 @@
+[
+  {
+    "op": "core/column-split",
+    "engineConfig": {
+      "facets": [
+        {
+          "type": "list",
+          "name": "category_name",
+          "expression": "isBlank(value)",
+          "columnName": "category_name",
+          "invert": false,
+          "omitBlank": false,
+          "omitError": false,
+          "selection": [
+            {
+              "v": {
+                "v": false,
+                "l": "false"
+              }
+            }
+          ],
+          "selectBlank": false,
+          "selectError": false
+        }
+      ],
+      "mode": "row-based"
+    },
+    "columnName": "category_name",
+    "guessCellType": true,
+    "removeOriginalColumn": false,
+    "mode": "separator",
+    "separator": "/",
+    "regex": false,
+    "maxColumns": 0,
+    "description": "Split column category_name by separator"
+  },
+  {
+    "op": "core/text-transform",
+    "engineConfig": {
+      "facets": [
+        {
+          "type": "list",
+          "name": "category_name",
+          "expression": "isBlank(value)",
+          "columnName": "category_name",
+          "invert": false,
+          "omitBlank": false,
+          "omitError": false,
+          "selection": [
+            {
+              "v": {
+                "v": false,
+                "l": "false"
+              }
+            }
+          ],
+          "selectBlank": false,
+          "selectError": false
+        }
+      ],
+      "mode": "row-based"
+    },
+    "columnName": "brand_name",
+    "expression": "grel:if(value==null,'Unbranded',value)",
+    "onError": "keep-original",
+    "repeat": false,
+    "repeatCount": 10,
+    "description": "Text transform on cells in column brand_name using expression grel:if(value==null,'Unbranded',value)"
+  },
+  {
+    "op": "core/column-addition",
+    "engineConfig": {
+      "facets": [
+        {
+          "type": "list",
+          "name": "category_name",
+          "expression": "isBlank(value)",
+          "columnName": "category_name",
+          "invert": false,
+          "omitBlank": false,
+          "omitError": false,
+          "selection": [
+            {
+              "v": {
+                "v": false,
+                "l": "false"
+              }
+            }
+          ],
+          "selectBlank": false,
+          "selectError": false
+        }
+      ],
+      "mode": "row-based"
+    },
+    "baseColumnName": "price",
+    "expression": "grel:if(value.toNumber() > 90,'1','0')",
+    "onError": "set-to-blank",
+    "newColumnName": "high_priced",
+    "columnInsertIndex": 11,
+    "description": "Create column high_priced at index 11 based on column price using expression grel:if(value.toNumber() > 90,'1','0')"
+  },
+  {
+    "op": "core/column-addition",
+    "engineConfig": {
+      "facets": [
+        {
+          "type": "list",
+          "name": "category_name",
+          "expression": "isBlank(value)",
+          "columnName": "category_name",
+          "invert": false,
+          "omitBlank": false,
+          "omitError": false,
+          "selection": [
+            {
+              "v": {
+                "v": false,
+                "l": "false"
+              }
+            }
+          ],
+          "selectBlank": false,
+          "selectError": false
+        }
+      ],
+      "mode": "row-based"
+    },
+    "baseColumnName": "item_description",
+    "expression": "grel:if(or(value.toLowercase().contains('discount'), value.toLowercase().contains('sale'),value.toLowercase().contains('offer')), '1', '0')",
+    "onError": "set-to-blank",
+    "newColumnName": "has_offer",
+    "columnInsertIndex": 14,
+    "description": "Create column has_offer at index 14 based on column item_description using expression grel:if(or(value.toLowercase().contains('discount'), value.toLowercase().contains('sale'),value.toLowercase().contains('offer')), '1', '0')"
+  }
+]

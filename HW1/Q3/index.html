@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>Rebrickable Lego Sets by Year</title>
+        <script type="text/javascript" src="lib/d3/d3.min.js"></script>
+    </head>
+    <body>
+        
+        <script type="text/javascript">
+            
+            
+            //width and height
+            var svgWidth = 2000;
+            var svgHeight = 900;
+            var barPadding = 5;
+            //create SVG element
+            var svg = d3.select("body")
+                         .append("svg")
+                         .attr("width", svgWidth)
+                         .attr("height", svgHeight);
+
+            //Load the data from q3.csv using D3 fetch methods
+            d3.dsv(",", "q3.csv", function(data) {
+                return {
+                    year: d3.timeParse("%Y")(data.year),
+                    running_total: parseInt(data.running_total)
+                }
+            }).then(function(data) {
+                var vPadding = 60;
+                var hPadding = 60;
+
+                //get the domain of svg
+                var min_running_total = d3.min(data, function(d) {
+                    return d.running_total;
+                });
+                var max_running_total = d3.max(data, function(d) {
+                    return d.running_total;
+                });
+                var min_year = d3.min(data, function(d) {
+                    return d.year;
+                });
+                var max_year = d3.max(data, function(d) {
+                    return d.year;
+                });
+
+
+                var hScale = d3.scaleLinear()
+                                .domain([min_running_total, max_running_total])
+                                .range([0, svgHeight - 2 * vPadding]);
+
+                var yScale = d3.scaleLinear()
+                                .domain([min_running_total, max_running_total])
+                                .range([svgHeight - vPadding, vPadding]);
+
+                var xScale = d3.scaleTime()
+                                .domain([min_year, max_year])
+                                .range([hPadding, svgWidth - hPadding]);
+
+                //define x and y axis;
+                var xAxis = d3.axisBottom()
+                               .scale(xScale)
+                               .ticks(d3.timeYear.every(3));
+                               
+                var yAxis = d3.axisLeft()
+                                .scale(yScale)
+                                .ticks(10);
+
+                svg.selectAll("rect")
+                    .data(data)
+                    .enter()
+                    .append("rect")
+                    .attr("x", function(d, i) {
+                        return xScale(d.year);
+                    })
+                    .attr("y", function(d) {
+                        return yScale(d.running_total);
+                    })
+                    .attr("width", (svgWidth/data.length - barPadding))
+                    .attr("height", function(d) {
+                        return hScale(d.running_total);
+                    })
+                    .attr("fill","#0080ff");
+
+
+                var X = svg.append("g")
+                    	.attr("class", "axis")
+                    	.attr("transform", "translate(0," + (svgHeight - vPadding) + ")");
+
+                var Y = svg.append("g")
+                    	.attr("class", "axis")
+                    	.attr("transform", "translate(" + hPadding + ", 0)");
+
+                X.call(xAxis);
+                Y.call(yAxis);
+                
+                svg.append("text")
+                    .attr("x", svgWidth / 2)
+                    .attr("y", 50)
+                    .attr("font-size", "36px")
+                    .attr("font-weight", "bold")
+                    .attr("text-anchor", "middle")
+                    .text("Rebrickable Lego Sets by Year");
+
+                svg.append("text")
+                    .attr("x", svgWidth)
+                    .attr("y", 890)
+                    .attr("font-size", "24px")
+                    .style("text-anchor","end")
+                    .text("jxiang37");                  
+
+            });
+
+        </script>
+    </body>
+</html>
