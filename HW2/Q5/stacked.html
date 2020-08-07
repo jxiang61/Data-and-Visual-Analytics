@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<head lang="en">
+    <title></title>
+    <script type="text/javascript" src="../lib/d3.v5.min.js"></script>
+    <style type="text/css">
+        /* Style the lines by removing the fill and applying a stroke */
+        .line {
+            fill: none;
+            stroke: #ffab00;
+            stroke-width: 3;
+        }
+        .overlay {
+            fill: none;
+            pointer-events: all;
+        }
+        /* Style the dots by assigning a fill and stroke */
+        .dot {
+            fill: #ffab00;
+            stroke: #fff;
+        }
+        .focus circle {
+            fill: none;
+            stroke: steelblue;
+        }
+        #box{
+            position:absolute;
+            top:43px;
+            left:130px;
+        }
+        #year_text {
+            position:absolute;
+            top:20px;
+            left:20px;
+            font-weight: bold;
+            font-size: 20px;
+        }
+
+    </style>
+</head>
+
+<body>
+<div class="pagebreak"></div>
+<script src = "../lib/d3.v5.min.js" charset = "utf-8"></script>
+
+<p id = "year_text">Select year:</p>
+<select id = "box">
+    <option value = "1" >Please select</option>
+    <option value = "2017" >2017</option>
+    <option value = "2018">2018</option>
+</select>
+<script type="text/javascript">
+
+    var width = 1200;
+    var height = 800;
+    var padding = {
+        top: 30,
+        right: 30,
+        bottom: 90,
+        left: 40
+    }
+    //create SVG element;
+    var svg0 = d3.select("body")
+        .append("svg")
+        .attr("width", width)
+        .attr("height", height)
+        .append("g")
+        .attr("transform", "translate(" + padding.left + "," + padding.top + ")");
+    //load data;
+    d3.dsv(",", "earthquake.csv", function (d) {
+        return {
+            year: parseInt(d["Year"]),
+            state: d["State"],
+            num5: parseInt(d["5_5.9"]),
+            num6: parseInt(d["6_6.9"]),
+            num7: parseInt(d["7.0+"])
+        }
+    }).then(function (data) {
+        //*****plot axis;
+        var states = []; //store the name of all states;
+        data.forEach(function (d) {
+            var flag = 0;
+            for (var i = 0; i < states.length; i++) {
+                if (states[i] === d.state) {
+                    flag = 1;
+                }
+            }
+            if (flag === 0) {
+                states.push(d.state);
+            }
+        });
+
+        //store year in years[]
+        var years = [];
+        data.forEach(function(d) {
+            var flag = 0;
+            for (var i = 0; i < years.length; i++) {
+                if (years[i] === parseInt(d.year)) {
+                    flag = 1;
+                }
+            }
+            if (flag === 0) {
+                years.push(parseInt(d.year));
+            }
+        });
+        // console.log(years)
+        var max_total = 0; //store the max number earthquakes of one state in one year;
+        data.forEach(function (d) {
+            var tmp_max = d.num5 + d.num6 + d.num7;
+            if (tmp_max >= max_total) {
+                max_total = tmp_max;
+            }
+        });
+
+        //5, 6, 7
+        var max_total_17 = 0;
+        var max_total_18 = 0;
+        var column = ["5_5.9","6_6.9","7.0+"];
+        var colors = d3.scaleOrdinal()
+            .domain(column)
+            .range(["#f2b447", "#d25c4d", "#b33040"]);
+
+        //extract data for 2017;
+        var ds17 = [];
+        var ds18 = [];
+        data.forEach(function (d) {
+            var tmp_data1 = {
+                column: "5_5.9",
+                yBegin: d.num7+d.num6,
+                yEnd: d.num5+d.num7+d.num6,
+                name: d.state}
+            var tmp_data2 = {
+                column: "6_6.9",
+                yBegin: d.num7,
+                yEnd: d.num7+d.num6,
+                name: d.state}
+            var tmp_data3 = {
+                column: "7.0+",
+                yBegin: 0,
+                yEnd: d.num7,
+                name: d.state}
+            if (d.year === 2017) {
+                var tmp_max = d.num5 + d.num6 + d.num7;
+                if (tmp_max >= max_total_17) {
+                    max_total_17 = tmp_max;
+                }
+                ds17.push(tmp_data1);
+                ds17.push(tmp_data2);
+                ds17.push(tmp_data3);
+            } else {
+                var tmp_max = d.num5 + d.num6 + d.num7;
+                if (tmp_max >= max_total_18) {
+                    max_total_18 = tmp_max;
+                }
+                ds18.push(tmp_data1);
+                ds18.push(tmp_data2);
+                ds18.push(tmp_data3);
+            }
+        })
+
+        var ds = {};
+        var select_year;
+        d3.select("body")
+            .on("change", function(){
+                var tmp = document.getElementById("box");
+                select_year = parseInt(tmp.options[tmp.selectedIndex].value)
+                if (select_year === 2018) {
+                    ds = ds18;
+                    plot(max_total_18, ds18);
+                } else if (select_year === 2017){
+                    ds = ds17;
+                    plot(max_total_17, ds17);
+                } else {
+                    ds = {}
+                    svg0.selectAll("*").remove();
+                }
+            })
+
+        function plot(max_total, ds) {
+            svg0.selectAll("*").remove();
+            var xScale0 = d3.scaleBand()
+                .domain(states)
+                .range([padding.left, width - padding.right])
+                .padding(0.1);
+            var yScale = d3.scaleLinear()
+                .domain([0, max_total])
+                .range([height - padding.bottom, padding.bottom]);
+
+            //define x and y axis;
+            var xAxis0 = d3.axisBottom()
+                .scale(xScale0);
+            var yAxis = d3.axisLeft()
+                .scale(yScale)
+                .ticks(10);
+
+            //call the x axis in a group tag;
+            var X0 = svg0.append("g")
+                .attr("class", "axis")
+                .attr("transform", "translate(0," + (height - padding.bottom) + ")");
+            var Y = svg0.append("g")
+                .attr("class", "axis")
+                .attr("transform", "translate(" + padding.left + ", 0)");
+            X0.call(xAxis0);
+            Y.call(yAxis);
+
+
+            var project_stackedbar = svg0.selectAll(".bar")
+                .data(ds)
+                .enter().append("g")
+                .attr("class", "g");
+
+            project_stackedbar.selectAll("rect")
+                .data(ds)
+                .enter()
+                .append("rect")
+                .attr("width", xScale0.bandwidth())
+                .attr("x", function(d) {
+                    return xScale0(d.name) ;
+                })
+                .attr("y", function(d) {
+                    return yScale(d.yEnd);
+                })
+                .attr("height", function(d) {
+                    return yScale(d.yBegin) - yScale(d.yEnd);
+                })
+                .style("fill", function (d) {
+                    return colors(d.column);
+                });
+
+
+            //add x-axis text
+            svg0.append("text")
+                .attr("x", width / 2)
+                .attr("y", height-padding.bottom/2 - 10)
+                .attr("font-size", "15px")
+                .attr("font-weight", "bold")
+                .attr("text-anchor", "middle")
+                .text("State");
+            //add y-axis text;
+            svg0.append("text")
+                .attr("x", -height / 2)
+                .attr("y", -padding.left / 3)
+                .attr("font-size", "15px")
+                .attr("font-weight", "bold")
+                .attr("text-anchor", "middle")
+                .attr("transform", "rotate(-90)")
+                .text("Number of Earthquakes");
+            //add chart title;
+            svg0.append("text")
+                .attr("x", width/2)
+                .attr("y", padding.top/2)
+                .attr("font-size", "20px")
+                .attr("font-weight", "bold")
+                .attr("text-anchor", "middle")
+                .text("Visualizing Earthquake Counts by State");
+
+            svg0.append("text")
+                .attr("x", width - padding.right*2)
+                .attr("y", height - padding.bottom + 40)
+                .attr("font-size", "15px")
+                .style("text-anchor","end")
+                .text("jxiang37");
+
+            var color_list = ["#b33040", "#d25c4d", "#f2b447"];
+            var mag_size = ["7.0+", "6_6.9", "5_5.9"]
+            svg0.selectAll("legend")
+                .data(color_list)
+                .enter()
+                .append("circle")
+                .attr("cx", width - 5 * padding.right)
+                .attr("cy", function (d,i) {
+                    return i * 30 + 40;
+                })
+                .attr("r", 8)
+                .style("fill", function (d) {
+                    return d;
+                })
+
+            svg0.selectAll('legend')
+                .data(mag_size)
+                .enter()
+                .append("text")
+                .attr("x", width -  5 * padding.right + 15)
+                .attr("y", function (d,i) {
+                    return i * 30 + 45;
+                })
+                .text(function(n) {
+                    return n;
+                })
+                .style("font-size", "15px");
+
+            svg0.selectAll("bar")
+                .data(ds)
+                .enter()
+                .append("text")
+                .attr("class", "text")
+                .attr("x", function(d, i) {
+                    if (d.column === "5_5.9") {
+                    console.log(i);
+                    return xScale0(d.name) + 45;
+                    } else {
+                        return -width * 1000;
+                    }
+                })
+                .attr("y", function(d, i) {
+                    if (d.column === "5_5.9") {
+                    //console.log(ds);
+                    return yScale(d.yEnd) - 5;
+                    } else {
+                        return -width * 1000;
+                    }
+                })
+                .attr('font-size', "15px")
+                .text(function (d) {
+                    if (d.column === "5_5.9") {
+                        return d.yEnd;
+                    }
+                })
+        }
+    })
+
+</script>
+</body>

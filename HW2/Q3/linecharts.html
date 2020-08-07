@@ -1,0 +1,1060 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<head lang="en">
+    <title>Earthquake Statistics for 2000-2015</title>
+    <script type="text/javascript" src="../lib/d3.v5.min.js"></script>
+    <style type="text/css">
+        /* Style the lines by removing the fill and applying a stroke */
+        .line {
+            fill: none;
+            stroke: #ffab00;
+            stroke-width: 3;
+        }
+        .axis { font: 25px sans-serif; }
+        .overlay {
+            fill: none;
+            pointer-events: all;
+        }
+        /* Style the dots by assigning a fill and stroke */
+        .dot {
+            fill: #ffab00;
+            stroke: #fff;
+        }
+        .focus circle {
+            fill: none;
+            stroke: steelblue;
+        }
+        .pagebreak {
+            height: 100px;
+        }
+        @media print {
+            .pagebreak {
+                page-break-before: always;
+            }
+        }
+    </style>
+</head>
+    <!-- Body tag is where we will append our SVG and SVG objects-->
+<body>
+<script type="text/javascript">
+    //set w and h of svg;
+    var padding = {
+        top: 30,
+        bottom: 100,
+        left: 60,
+        right: 80
+    }
+    var width = 2000;
+    var height = 1200;
+    //create SVG element;
+    var svg0 = d3.select("body")
+                .append("svg")
+                .attr("width", width)
+                .attr("height", height)
+                .append("g")
+                .attr("transform", "translate(" + padding.left + "," + padding.top + ")");
+    //load data from earthquake.csv;
+    d3.dsv(",", "earthquakes.csv",function (d) {
+        return {
+            year: d3.timeParse("%Y")(d["year"]),
+            num_5: parseFloat(d["5_5.9"]),
+            num_6: parseFloat(d["6_6.9"]),
+            num_7: parseFloat(d["7_7.9"]),
+            num_8: parseFloat(d["8.0+"]),
+            esd: parseInt(d["Estimated Deaths"])
+        }
+    }).then(function (data) {
+        //get the min year and max year;
+        var min_year = d3.min(data, function (d) {
+            return d.year;
+        });
+        var max_year = d3.max(data, function (d) {
+            return d.year;
+        });
+        //get the max earthquake numbers;
+        var max_enum = d3.max(data, function (d) {
+            return d.num_5;
+        });
+        //set x and y scale;
+        var xScale = d3.scaleTime()
+                        .domain([min_year, max_year])
+                        .range([padding.left, width - padding.right]);
+        var yScale = d3.scaleLinear()
+                        .domain([0, max_enum])
+                        .range([height - padding.bottom, padding.bottom]);
+        //define x and y axis;
+        var xAxis = d3.axisBottom()
+            .scale(xScale);
+
+        var yAxis = d3.axisLeft()
+            .scale(yScale);
+
+        //generate lines;
+        var line1 = d3.line()
+            .x(function(d) {
+                return xScale(d.year);
+            })
+            .y(function (d) {
+                return yScale(d.num_5)
+            })
+            .curve(d3.curveMonotoneX);
+        var line2 = d3.line()
+            .x(function(d) {
+                return xScale(d.year);
+            })
+            .y(function (d) {
+                return yScale(d.num_6)
+            })
+            .curve(d3.curveMonotoneX);
+        var line3 = d3.line()
+            .x(function(d) {
+                return xScale(d.year);
+            })
+            .y(function (d) {
+                return yScale(d.num_7)
+            })
+            .curve(d3.curveMonotoneX);
+        var line4 = d3.line()
+            .x(function(d) {
+                return xScale(d.year);
+            })
+            .y(function (d) {
+                return yScale(d.num_8)
+            })
+            .curve(d3.curveMonotoneX);
+        //call the x axis in a group tag;
+        var X = svg0.append("g")
+            .attr("class", "axis")
+            .attr("transform", "translate(0," + (height - padding.bottom) + ")");
+
+        var Y = svg0.append("g")
+            .attr("class", "axis")
+            .attr("transform", "translate(" + padding.left + ", 0)");
+
+        X.call(xAxis);
+        Y.call(yAxis);
+
+        var colors = ["#FFC300", "#FF5733", "#C70039", "#900C3F"];
+        // Append the path, bind the data, and call the line generator
+        svg0.append("path")
+            .datum(data)
+            .attr("class", "line") // Assign a class for styling
+            .attr("d", line1)
+            .style("stroke", colors[0]);
+        svg0.append("path")
+            .datum(data)
+            .attr("class", "line") // Assign a class for styling
+            .attr("d", line2)
+            .style("stroke", colors[1]);
+        svg0.append("path")
+            .datum(data)
+            .attr("class", "line") // Assign a class for styling
+            .attr("d", line3)
+            .style("stroke", colors[2]);
+        svg0.append("path")
+            .datum(data)
+            .attr("class", "line") // Assign a class for styling
+            .attr("d", line4)
+            .style("stroke", colors[3]);
+
+        //add x-axis text
+        svg0.append("text")
+            .attr("x", width / 2)
+            .attr("y", height-padding.bottom/3)
+            .attr("font-size", "36px")
+            .attr("font-weight", "bold")
+            .attr("text-anchor", "middle")
+            .text("Year");
+        //add y-axis text;
+        svg0.append("text")
+            .attr("x", -height / 2)
+            .attr("y", -padding.left / 3)
+            .attr("font-size", "36px")
+            .attr("font-weight", "bold")
+            .attr("text-anchor", "middle")
+            .attr("transform", "rotate(-90)")
+            .text("Number of Earthquakes");
+        //add chart title;
+        svg0.append("text")
+            .attr("x", width/2)
+            .attr("y", padding.top/2)
+            .attr("font-size", "36px")
+            .attr("font-weight", "bold")
+            .attr("text-anchor", "middle")
+            .text("Earthquake Statistics for 2000-2015");
+
+        //add legend;
+        var name = ["5_5.9", "6_6.9", "7_7.9", "8.0+"]
+        svg0.selectAll("legend")
+            .data(colors)
+            .enter()
+            .append("circle")
+            .attr("cx", width - 2 * padding.right + 80)
+            .attr("cy", function (d,i) {
+                return i * 40 - 15;
+            })
+            .attr("r", 15)
+            .style("fill", function (d) {
+                return d;
+            })
+
+        svg0.selectAll('legend')
+            .data(name)
+            .enter()
+            .append("text")
+            .attr("x", width -  2 * padding.right )
+            .attr("y", function (d,i) {
+                return i * 40 - 7;
+            })
+            .text(function(n) {
+                return n;
+            })
+            .style("font-size", "20px");
+    });
+
+
+
+</script>
+<div class="pagebreak"></div>
+<script type="text/javascript">
+    //set w and h of svg;
+    var padding = {
+        top: 30,
+        bottom: 100,
+        left: 60,
+        right: 80
+    }
+    var width = 2000;
+    var height = 1200;
+    //create SVG element;
+    var svg1 = d3.select("body")
+        .append("svg")
+        .attr("width", width)
+        .attr("height", height)
+        .append("g")
+        .attr("transform", "translate(" + padding.left + "," + padding.top + ")");
+    //load data from earthquake.csv;
+    d3.dsv(",", "earthquakes.csv",function (d) {
+        return {
+            year: d3.timeParse("%Y")(d["year"]),
+            num_5: parseFloat(d["5_5.9"]),
+            num_6: parseFloat(d["6_6.9"]),
+            num_7: parseFloat(d["7_7.9"]),
+            num_8: parseFloat(d["8.0+"]),
+            esd: parseInt(d["Estimated Deaths"])
+        }
+    }).then(function (data) {
+        //get the min year and max year;
+        var min_year = d3.min(data, function (d) {
+            return d.year;
+        });
+        var max_year = d3.max(data, function (d) {
+            return d.year;
+        });
+        //get the max earthquake numbers;
+        var max_enum = d3.max(data, function (d) {
+            return d.num_5;
+        });
+        //set x and y scale;
+        var xScale = d3.scaleTime()
+            .domain([min_year, max_year])
+            .range([padding.left, width - padding.right]);
+        var yScale = d3.scaleLinear()
+            .domain([0, max_enum])
+            .range([height - padding.bottom, padding.bottom]);
+        //define x and y axis;
+        var xAxis = d3.axisBottom()
+            .scale(xScale);
+
+        var yAxis = d3.axisLeft()
+            .scale(yScale);
+
+        //generate lines;
+        var line1 = d3.line()
+            .x(function(d) {
+                return xScale(d.year);
+            })
+            .y(function (d) {
+                return yScale(d.num_5)
+            })
+            .curve(d3.curveMonotoneX);
+        var line2 = d3.line()
+            .x(function(d) {
+                return xScale(d.year);
+            })
+            .y(function (d) {
+                return yScale(d.num_6)
+            })
+            .curve(d3.curveMonotoneX);
+        var line3 = d3.line()
+            .x(function(d) {
+                return xScale(d.year);
+            })
+            .y(function (d) {
+                return yScale(d.num_7)
+            })
+            .curve(d3.curveMonotoneX);
+        var line4 = d3.line()
+            .x(function(d) {
+                return xScale(d.year);
+            })
+            .y(function (d) {
+                return yScale(d.num_8)
+            })
+            .curve(d3.curveMonotoneX);
+        //call the x axis in a group tag;
+        var X = svg1.append("g")
+            .attr("class", "axis")
+            .attr("transform", "translate(0," + (height - padding.bottom) + ")");
+
+        var Y = svg1.append("g")
+            .attr("class", "axis")
+            .attr("transform", "translate(" + padding.left + ", 0)");
+
+        X.call(xAxis);
+        Y.call(yAxis);
+
+        var colors = ["#FFC300", "#FF5733", "#C70039", "#900C3F"];
+        // Append the path, bind the data, and call the line generator
+        svg1.append("path")
+            .datum(data)
+            .attr("class", "line") // Assign a class for styling
+            .attr("d", line1)
+            .style("stroke", colors[0]);
+        svg1.append("path")
+            .datum(data)
+            .attr("class", "line") // Assign a class for styling
+            .attr("d", line2)
+            .style("stroke", colors[1]);
+        svg1.append("path")
+            .datum(data)
+            .attr("class", "line") // Assign a class for styling
+            .attr("d", line3)
+            .style("stroke", colors[2]);
+        svg1.append("path")
+            .datum(data)
+            .attr("class", "line") // Assign a class for styling
+            .attr("d", line4)
+            .style("stroke", colors[3]);
+
+        //add x-axis text
+        svg1.append("text")
+            .attr("x", width / 2)
+            .attr("y", height-padding.bottom/3)
+            .attr("font-size", "36px")
+            .attr("font-weight", "bold")
+            .attr("text-anchor", "middle")
+            .text("Year");
+        //add y-axis text;
+        svg1.append("text")
+            .attr("x", -height / 2)
+            .attr("y", -padding.left / 3)
+            .attr("font-size", "36px")
+            .attr("font-weight", "bold")
+            .attr("text-anchor", "middle")
+            .attr("transform", "rotate(-90)")
+            .text("Number of Earthquakes");
+        //add chart title;
+        svg1.append("text")
+            .attr("x", width/2)
+            .attr("y", padding.top/2)
+            .attr("font-size", "36px")
+            .attr("font-weight", "bold")
+            .attr("text-anchor", "middle")
+            .text("Earthquake Statistics for 2000-2015 with Symbols");
+
+        //add legend;
+        var name = ["5_5.9", "6_6.9", "7_7.9", "8.0+"]
+        svg1.selectAll("legend")
+            .data(colors)
+            .enter()
+            .append("circle")
+            .attr("cx", width - 2 * padding.right + 80)
+            .attr("cy", function (d,i) {
+                return i * 40 - 15;
+            })
+            .attr("r", 15)
+            .style("fill", function (d) {
+                return d;
+            })
+
+        svg1.selectAll('legend')
+            .data(name)
+            .enter()
+            .append("text")
+            .attr("x", width -  2 * padding.right )
+            .attr("y", function (d,i) {
+                return i * 40 - 7;
+            })
+            .text(function(n) {
+                return n;
+            })
+            .style("font-size", "20px");
+
+        //draw the symbols;
+        var min_esd = d3.min(data, function(d) {
+           return d.esd;
+        });
+        var max_esd = d3.max(data, function(d) {
+            return d.esd;
+        });
+        //define the radius of circle
+        var rScale = d3.scaleLinear()
+                        .domain([min_esd,max_esd])
+                        .range([10,20]);
+        //define the width of rectangle;
+        var wScale = d3.scaleLinear()
+                        .domain([min_esd, max_esd])
+                        .range([20,40]);
+        //define the diagonal length scale of polygon
+        var dscale = d3.scaleLinear()
+                        .domain([min_esd, max_esd])
+                        .range([10,20]);
+
+
+        //draw the first line with circle dots;
+        svg1.selectAll(".dot")
+            .data(data)
+            .enter()
+            .append("circle")
+            .attr("cx", function (d) {
+                return xScale(d.year)
+            })
+            .attr("cy", function (d) {
+                return yScale(d.num_5)
+            })
+            .attr("r", function (d) {
+                return rScale(d.esd)
+            })
+            .style("fill", "#FFC300");
+
+        //draw the second line with triangle dots;
+        svg1.selectAll(".dot")
+            .data(data)
+            .enter()
+            .append("polygon")
+            .attr("points", function (d) {
+                var left_x = xScale(d.year) - 1.2* dscale(d.esd);
+                var left_y = yScale(d.num_6) + 0.8 * dscale(d.esd);
+                var right_x = xScale(d.year) +  1.2 * dscale(d.esd);
+                var right_y = yScale(d.num_6) + 0.8 * dscale(d.esd);
+                var top_x = xScale(d.year);
+                var top_y = yScale(d.num_6) - 1.5 * dscale(d.esd);
+                var res = [[left_x, left_y],  [top_x, top_y], [right_x, right_y]];
+                return res;
+            })
+            .style("fill", "#FF5733");
+
+        //draw the third line with diamond dots;
+        svg1.selectAll(".dot")
+            .data(data)
+            .enter()
+            .append("polygon")
+            .attr("points", function (d) {
+                var left_x = xScale(d.year) - dscale(d.esd);
+                var left_y = yScale(d.num_7);
+                var right_x = xScale(d.year) + dscale(d.esd);
+                var right_y = yScale(d.num_7);
+                var top_x = xScale(d.year);
+                var top_y = yScale(d.num_7) - 1.5 * dscale(d.esd);
+                var bottom_x = xScale(d.year);
+                var bottom_y = yScale(d.num_7) + 1.5 * dscale(d.esd);
+                var res = [[left_x, left_y],  [top_x, top_y], [right_x, right_y]
+                    ,[bottom_x, bottom_y]];
+                return res;
+            })
+            .style("fill", "#C70039");
+
+        //draw the forth line with rect dots;
+        svg1.selectAll(".dot")
+            .data(data)
+            .enter()
+            .append("rect")
+            .attr("width", function (d) {
+                return wScale(d.esd)
+            })
+            .attr("height", function (d) {
+                return wScale(d.esd)
+            })
+            .attr("x", function (d) {
+                return xScale(d.year) - wScale(d.esd) / 2;
+            })
+            .attr("y", function (d) {
+                return yScale(d.num_8) - wScale(d.esd) / 2;
+            })
+            .style("fill", "#900C3F");
+    });
+
+
+</script>
+
+<div class="pagebreak"></div>
+<script type="text/javascript">
+    //set w and h of svg;
+    var padding = {
+        top: 30,
+        bottom: 100,
+        left: 60,
+        right: 30
+    }
+    var width = 2000;
+    var height = 1200;
+    //create SVG element;
+    var svg2 = d3.select("body")
+        .append("svg")
+        .attr("width", width)
+        .attr("height", height)
+        .append("g")
+        .attr("transform", "translate(" + padding.left + "," + padding.top + ")");
+    //load data from earthquake.csv;
+    d3.dsv(",", "earthquakes.csv",function (d) {
+        return {
+            year: d3.timeParse("%Y")(d["year"]),
+            num_5: parseFloat(d["5_5.9"]),
+            num_6: parseFloat(d["6_6.9"]),
+            num_7: parseFloat(d["7_7.9"]),
+            num_8: parseFloat(d["8.0+"]),
+            esd: parseInt(d["Estimated Deaths"])
+        }
+    }).then(function (data) {
+        //get the min year and max year;
+        var min_year = d3.min(data, function (d) {
+            return d.year;
+        });
+        var max_year = d3.max(data, function (d) {
+            return d.year;
+        });
+        //get the max earthquake numbers;
+        var max_enum = d3.max(data, function (d) {
+            return d.num_5;
+        });
+        //set x and y scale;
+        var xScale = d3.scaleTime()
+            .domain([min_year, max_year])
+            .range([padding.left, width - padding.right]);
+        var yScale = d3.scaleSqrt()
+            .domain([0, max_enum])
+            .range([height - padding.bottom, padding.bottom]);
+        //define x and y axis;
+        var xAxis = d3.axisBottom()
+            .scale(xScale);
+
+        var yAxis = d3.axisLeft()
+            .scale(yScale);
+
+        //generate lines;
+        var line1 = d3.line()
+            .x(function(d) {
+                return xScale(d.year);
+            })
+            .y(function (d) {
+                return yScale(d.num_5)
+            })
+            .curve(d3.curveMonotoneX);
+        var line2 = d3.line()
+            .x(function(d) {
+                return xScale(d.year);
+            })
+            .y(function (d) {
+                return yScale(d.num_6)
+            })
+            .curve(d3.curveMonotoneX);
+        var line3 = d3.line()
+            .x(function(d) {
+                return xScale(d.year);
+            })
+            .y(function (d) {
+                return yScale(d.num_7)
+            })
+            .curve(d3.curveMonotoneX);
+        var line4 = d3.line()
+            .x(function(d) {
+                return xScale(d.year);
+            })
+            .y(function (d) {
+                return yScale(d.num_8)
+            })
+            .curve(d3.curveMonotoneX);
+        //call the x axis in a group tag;
+        var X = svg2.append("g")
+            .attr("class", "axis")
+            .attr("transform", "translate(0," + (height - padding.bottom) + ")");
+
+        var Y = svg2.append("g")
+            .attr("class", "axis")
+            .attr("transform", "translate(" + padding.left + ", 0)");
+
+        X.call(xAxis);
+        Y.call(yAxis);
+
+        var colors = ["#FFC300", "#FF5733", "#C70039", "#900C3F"];
+        // Append the path, bind the data, and call the line generator
+        svg2.append("path")
+            .datum(data)
+            .attr("class", "line") // Assign a class for styling
+            .attr("d", line1)
+            .style("stroke", colors[0]);
+        svg2.append("path")
+            .datum(data)
+            .attr("class", "line") // Assign a class for styling
+            .attr("d", line2)
+            .style("stroke", colors[1]);
+        svg2.append("path")
+            .datum(data)
+            .attr("class", "line") // Assign a class for styling
+            .attr("d", line3)
+            .style("stroke", colors[2]);
+        svg2.append("path")
+            .datum(data)
+            .attr("class", "line") // Assign a class for styling
+            .attr("d", line4)
+            .style("stroke", colors[3]);
+
+        //add x-axis text
+        svg2.append("text")
+            .attr("x", width / 2)
+            .attr("y", height-padding.bottom/3)
+            .attr("font-size", "36px")
+            .attr("font-weight", "bold")
+            .attr("text-anchor", "middle")
+            .text("Year");
+        //add y-axis text;
+        svg2.append("text")
+            .attr("x", -height / 2)
+            .attr("y", -padding.left / 3)
+            .attr("font-size", "36px")
+            .attr("font-weight", "bold")
+            .attr("text-anchor", "middle")
+            .attr("transform", "rotate(-90)")
+            .text("Number of Earthquakes");
+        //add chart title;
+        svg2.append("text")
+            .attr("x", width/2)
+            .attr("y", padding.top/2)
+            .attr("font-size", "36px")
+            .attr("font-weight", "bold")
+            .attr("text-anchor", "middle")
+            .text("Earthquake statistics for 2000-2015 (Square root Scale)");
+
+        //add legend;
+        var name = ["5_5.9", "6_6.9", "7_7.9", "8.0+"]
+        svg2.selectAll("legend")
+            .data(colors)
+            .enter()
+            .append("circle")
+            .attr("cx", width - 2 * padding.right + 80)
+            .attr("cy", function (d,i) {
+                return i * 40 - 15;
+            })
+            .attr("r", 15)
+            .style("fill", function (d) {
+                return d;
+            })
+
+        svg2.selectAll('legend')
+            .data(name)
+            .enter()
+            .append("text")
+            .attr("x", width -  2 * padding.right )
+            .attr("y", function (d,i) {
+                return i * 40 - 7;
+            })
+            .text(function(n) {
+                return n;
+            })
+            .style("font-size", "20px");
+
+        //draw the symbols;
+        var min_esd = d3.min(data, function(d) {
+            return d.esd;
+        });
+        var max_esd = d3.max(data, function(d) {
+            return d.esd;
+        });
+        //define the radius of circle
+        var rScale = d3.scaleLinear()
+            .domain([min_esd,max_esd])
+            .range([10,20]);
+        //define the width of rectangle;
+        var wScale = d3.scaleLinear()
+            .domain([min_esd, max_esd])
+            .range([20,40]);
+        //define the diagonal length scale of polygon
+        var dscale = d3.scaleLinear()
+            .domain([min_esd, max_esd])
+            .range([10,20]);
+
+
+        //draw the first line with circle dots;
+        svg2.selectAll(".dot")
+            .data(data)
+            .enter()
+            .append("circle")
+            .attr("cx", function (d) {
+                return xScale(d.year)
+            })
+            .attr("cy", function (d) {
+                return yScale(d.num_5)
+            })
+            .attr("r", function (d) {
+                return rScale(d.esd)
+            })
+            .style("fill", "#FFC300");
+
+        //draw the second line with triangle dots;
+        svg2.selectAll(".dot")
+            .data(data)
+            .enter()
+            .append("polygon")
+            .attr("points", function (d) {
+                var left_x = xScale(d.year) - 1.2* dscale(d.esd);
+                var left_y = yScale(d.num_6) + 0.8 * dscale(d.esd);
+                var right_x = xScale(d.year) +  1.2 * dscale(d.esd);
+                var right_y = yScale(d.num_6) + 0.8 * dscale(d.esd);
+                var top_x = xScale(d.year);
+                var top_y = yScale(d.num_6) - 1.5 * dscale(d.esd);
+                var res = [[left_x, left_y],  [top_x, top_y], [right_x, right_y]];
+                return res;
+            })
+            .style("fill", "#FF5733");
+
+        //draw the third line with diamond dots;
+        svg2.selectAll(".dot")
+            .data(data)
+            .enter()
+            .append("polygon")
+            .attr("points", function (d) {
+                var left_x = xScale(d.year) - dscale(d.esd);
+                var left_y = yScale(d.num_7);
+                var right_x = xScale(d.year) + dscale(d.esd);
+                var right_y = yScale(d.num_7);
+                var top_x = xScale(d.year);
+                var top_y = yScale(d.num_7) - 1.5 * dscale(d.esd);
+                var bottom_x = xScale(d.year);
+                var bottom_y = yScale(d.num_7) + 1.5 * dscale(d.esd);
+                var res = [[left_x, left_y],  [top_x, top_y], [right_x, right_y]
+                    ,[bottom_x, bottom_y]];
+                return res;
+            })
+            .style("fill", "#C70039");
+
+        //draw the forth line with rect dots;
+        svg2.selectAll(".dot")
+            .data(data)
+            .enter()
+            .append("rect")
+            .attr("width", function (d) {
+                return wScale(d.esd)
+            })
+            .attr("height", function (d) {
+                return wScale(d.esd)
+            })
+            .attr("x", function (d) {
+                return xScale(d.year) - wScale(d.esd) / 2;
+            })
+            .attr("y", function (d) {
+                return yScale(d.num_8) - wScale(d.esd) / 2;
+            })
+            .style("fill", "#900C3F");
+    });
+
+
+</script>
+
+<div class="pagebreak"></div>
+<script type="text/javascript">
+    //set w and h of svg;
+    var padding = {
+        top: 30,
+        bottom: 100,
+        left: 60,
+        right: 80
+    }
+    var width = 2000;
+    var height = 1200;
+    var padding_right = 150;
+    //create SVG element;
+    var svg3 = d3.select("body")
+        .append("svg")
+        .attr("width", width)
+        .attr("height", height)
+        .append("g")
+        .attr("transform", "translate(" + padding.left + "," + padding.top + ")")
+
+    //load data from earthquake.csv;
+    d3.dsv(",", "earthquakes.csv",function (d) {
+        return {
+            year: d3.timeParse("%Y")(d["year"]),
+            num_5: parseFloat(d["5_5.9"]),
+            num_6: parseFloat(d["6_6.9"]),
+            num_7: parseFloat(d["7_7.9"]),
+            num_8: parseFloat(d["8.0+"]),
+            esd: parseInt(d["Estimated Deaths"])
+        }
+    }).then(function (data) {
+        //get the min year and max year;
+        var min_year = d3.min(data, function (d) {
+            return d.year;
+        });
+        var max_year = d3.max(data, function (d) {
+            return d.year;
+        });
+        //get the max earthquake numbers;
+        var max_enum = d3.max(data, function (d) {
+            return d.num_5;
+        });
+        //set x and y scale;
+        var min_enum = d3.min(data, function (d) {
+            if (d.num_8 > 0) {
+                return d.num_8;
+            } else {
+                return 0.9;
+            }
+        })
+        var xScale = d3.scaleTime()
+            .domain([min_year, max_year])
+            .range([padding.left, width - padding.right]);
+        var yScale = d3.scaleLog()
+            .domain([min_enum, max_enum])
+            .range([height-padding.bottom, padding.bottom]);
+        //define x and y axis;
+        var xAxis = d3.axisBottom()
+            .scale(xScale);
+
+        var yAxis = d3.axisLeft()
+            .scale(yScale);
+
+        //generate lines;
+        var line1 = d3.line()
+            .x(function(d) {
+                return xScale(d.year);
+            })
+            .y(function (d) {
+                return yScale(d.num_5)
+            })
+            .curve(d3.curveMonotoneX);
+        var line2 = d3.line()
+            .x(function(d) {
+                return xScale(d.year);
+            })
+            .y(function (d) {
+                return yScale(d.num_6)
+            })
+            .curve(d3.curveMonotoneX);
+        var line3 = d3.line()
+            .x(function(d) {
+                return xScale(d.year);
+            })
+            .y(function (d) {
+                return yScale(d.num_7)
+            })
+            .curve(d3.curveMonotoneX);
+        var line4 = d3.line()
+            .x(function(d) {
+                return xScale(d.year);
+            })
+            .y(function (d) {
+                if (d.num_8 > 0) {
+                    return yScale(d.num_8)
+                }
+                return height - padding.bottom;
+
+            })
+            .curve(d3.curveMonotoneX);
+        //call the x axis in a group tag;
+        var X = svg3.append("g")
+            .attr("class", "axis")
+            .attr("transform", "translate(0," + (height - padding.bottom) + ")");
+
+        var Y = svg3.append("g")
+            .attr("class", "axis")
+            .attr("transform", "translate(" + padding.left + ", 0)");
+
+        X.call(xAxis);
+        Y.call(yAxis);
+
+        var colors = ["#FFC300", "#FF5733", "#C70039", "#900C3F"];
+        // Append the path, bind the data, and call the line generator
+        svg3.append("path")
+            .datum(data)
+            .attr("class", "line") // Assign a class for styling
+            .attr("d", line1)
+            .style("stroke", colors[0]);
+        svg3.append("path")
+            .datum(data)
+            .attr("class", "line") // Assign a class for styling
+            .attr("d", line2)
+            .style("stroke", colors[1]);
+        svg3.append("path")
+            .datum(data)
+            .attr("class", "line") // Assign a class for styling
+            .attr("d", line3)
+            .style("stroke", colors[2]);
+        svg3.append("path")
+            .datum(data)
+            .attr("class", "line") // Assign a class for styling
+            .attr("d", line4)
+            .style("stroke", colors[3]);
+
+        //add x-axis text
+        svg3.append("text")
+            .attr("x", width / 2)
+            .attr("y", height-padding.bottom/3)
+            .attr("font-size", "36px")
+            .attr("font-weight", "bold")
+            .attr("text-anchor", "middle")
+            .text("Year");
+        //add y-axis text;
+        svg3.append("text")
+            .attr("x", -height / 2)
+            .attr("y", -padding.left / 3)
+            .attr("font-size", "36px")
+            .attr("font-weight", "bold")
+            .attr("text-anchor", "middle")
+            .attr("transform", "rotate(-90)")
+            .text("Number of Earthquakes");
+        //add chart title;
+        svg3.append("text")
+            .attr("x", width/2)
+            .attr("y", padding.top/2)
+            .attr("font-size", "36px")
+            .attr("font-weight", "bold")
+            .attr("text-anchor", "middle")
+            .text("Earthquake statistics for 2000-2015 (Log Scale)");
+
+        //add legend;
+        var name = ["5_5.9", "6_6.9", "7_7.9", "8.0+"]
+        svg3.selectAll("legend")
+            .data(colors)
+            .enter()
+            .append("circle")
+            .attr("cx", width - 2 * padding.right + 80)
+            .attr("cy", function (d,i) {
+                return i * 40 - 15;
+            })
+            .attr("r", 15)
+            .style("fill", function (d) {
+                return d;
+            })
+
+        svg3.selectAll('legend')
+            .data(name)
+            .enter()
+            .append("text")
+            .attr("x", width -  2 * padding.right )
+            .attr("y", function (d,i) {
+                return i * 40 - 7;
+            })
+            .text(function(n) {
+                return n;
+            })
+            .style("font-size", "20px");
+
+        //draw the symbols;
+        var min_esd = d3.min(data, function(d) {
+            return d.esd;
+        });
+        var max_esd = d3.max(data, function(d) {
+            return d.esd;
+        });
+        //define the radius of circle
+        var rScale = d3.scaleLinear()
+            .domain([min_esd,max_esd])
+            .range([10,20]);
+        //define the width of rectangle;
+        var wScale = d3.scaleLinear()
+            .domain([min_esd, max_esd])
+            .range([20,40]);
+        //define the diagonal length scale of polygon
+        var dscale = d3.scaleLinear()
+            .domain([min_esd, max_esd])
+            .range([10,20]);
+
+
+        //draw the first line with circle dots;
+        svg3.selectAll(".dot")
+            .data(data)
+            .enter()
+            .append("circle")
+            .attr("cx", function (d) {
+                return xScale(d.year)
+            })
+            .attr("cy", function (d) {
+                return yScale(d.num_5)
+            })
+            .attr("r", function (d) {
+                return rScale(d.esd)
+            })
+            .style("fill", "#FFC300");
+
+        //draw the second line with triangle dots;
+        svg3.selectAll(".dot")
+            .data(data)
+            .enter()
+            .append("polygon")
+            .attr("points", function (d) {
+                var left_x = xScale(d.year) - 1.2* dscale(d.esd);
+                var left_y = yScale(d.num_6) + 0.8 * dscale(d.esd);
+                var right_x = xScale(d.year) +  1.2 * dscale(d.esd);
+                var right_y = yScale(d.num_6) + 0.8 * dscale(d.esd);
+                var top_x = xScale(d.year);
+                var top_y = yScale(d.num_6) - 1.5 * dscale(d.esd);
+                var res = [[left_x, left_y],  [top_x, top_y], [right_x, right_y]];
+                return res;
+            })
+            .style("fill", "#FF5733");
+
+        //draw the third line with diamond dots;
+        svg3.selectAll(".dot")
+            .data(data)
+            .enter()
+            .append("polygon")
+            .attr("points", function (d) {
+                var left_x = xScale(d.year) - dscale(d.esd);
+                var left_y = yScale(d.num_7);
+                var right_x = xScale(d.year) + dscale(d.esd);
+                var right_y = yScale(d.num_7);
+                var top_x = xScale(d.year);
+                var top_y = yScale(d.num_7) - 1.5 * dscale(d.esd);
+                var bottom_x = xScale(d.year);
+                var bottom_y = yScale(d.num_7) + 1.5 * dscale(d.esd);
+                var res = [[left_x, left_y],  [top_x, top_y], [right_x, right_y]
+                    ,[bottom_x, bottom_y]];
+                return res;
+            })
+            .style("fill", "#C70039");
+
+        //draw the forth line with rect dots;
+        svg3.selectAll(".dot")
+            .data(data)
+            .enter()
+            .append("rect")
+            .attr("width", function (d) {
+                return wScale(d.esd)
+            })
+            .attr("height", function (d) {
+                return wScale(d.esd)
+            })
+            .attr("x", function (d) {
+                return xScale(d.year) - wScale(d.esd) / 2;
+            })
+            .attr("y", function (d) {
+                if (d.num_8 > 0) {
+                    return yScale(d.num_8) - wScale(d.esd) / 2;
+                }
+                return height - padding.bottom - wScale(d.esd) / 2;
+
+            })
+            .style("fill", "#900C3F");
+
+        svg3.append("text")
+            .attr("x", width - padding.right)
+            .attr("y", height - padding.bottom + 60)
+            .attr("font-size", "36px")
+            .style("text-anchor","end")
+            .text("jxiang37");
+    });
+
+</script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+1.What is the main reason to use a random forest versus a decision tree? (<= 50 words)
+Only using decision tree may cause overfitting. By applying random forest, we can choose train data randomly to train a more accurate model so that we will avoid large variance.
+
+2.How long did your random forest take to run? (in seconds)
+About 10 seconds
+
+3.What accuracy (to two decimal places, xx.xx%) were you able to obtain?
+About 72.90%

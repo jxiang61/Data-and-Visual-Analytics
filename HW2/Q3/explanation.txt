@@ -1,0 +1,2 @@
+In some datasets, some data might be very large, and some might be pretty small. 
+So in order to visualize them clearly, we can apply nonlinear scales to normalize these data and to reduce the range among them. 
